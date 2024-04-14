@@ -6,6 +6,7 @@ using Marten;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using HealthChecks.UI.Client;
+using Discount.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +30,9 @@ builder.Services.AddMarten(opts =>
 }).UseLightweightSessions();
 
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
-//builder.Services.AddScoped<IBasketRepository, CachedBasketRepository>();
 builder.Services.Decorate<IBasketRepository, CachedBasketRepository>();
+
+//builder.Services.AddScoped<IBasketRepository, CachedBasketRepository>();
 //builder.Services.AddScoped<IBasketRepository>(provider =>
 //{
 //    var basketRepository=provider.GetRequiredService<BasketRepository>();
@@ -44,11 +46,30 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 });
 
+//Grpc Service
+builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]!);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+
+    return handler;
+});
+
 
 //Async Communication Services
 
+
 //Cross-Cutting Services
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
+
+
 builder.Services.AddHealthChecks()
      .AddNpgSql(builder.Configuration.GetConnectionString("Database")!)
      .AddRedis(builder.Configuration.GetConnectionString("Redis")!);
