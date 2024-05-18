@@ -1,12 +1,11 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Basket.API.Data;
 using BuildingBlocks.Behaviors;
 using BuildingBlocks.Exceptions.Handler;
-using Marten;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Options;
-using HealthChecks.UI.Client;
+using BuildingBlocks.Messaging.MassTransit;
 using Discount.Grpc;
+using HealthChecks.UI.Client;
+using Marten;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +63,7 @@ builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(
 
 
 //Async Communication Services
+builder.Services.AddMessageBroker(builder.Configuration);
 
 
 //Cross-Cutting Services
